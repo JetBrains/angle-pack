@@ -25,6 +25,7 @@ def main():
     subprocess.check_call(['git', 'reset', '--hard'])
     subprocess.check_call(['git', 'clean', '-d', '-f'])
     subprocess.check_call(['git', 'fetch', 'origin'])
+    subprocess.check_call(['git', 'reset', '--hard'], cwd='build')
   else:
     print('> Cloning')
     subprocess.check_call(['git', 'clone', '--config', 'core.autocrlf=input', 'https://chromium.googlesource.com/angle/angle.git', 'angle'])
@@ -72,6 +73,18 @@ git.exe %*'''
     print(depot_tools_git_workaround, file=git_bat_file)
 
   subprocess.check_call([os.path.join(tools_dir, gclient), 'sync'], env=env)
+
+  # Calculating an official build's timestamp requires the chrome/VERSION file
+  with open("build/compute_build_timestamp.py", "r") as timestamp_file:
+    timestamp_file_contents = timestamp_file.read()
+
+  timestamp_file_contents = timestamp_file_contents.replace(
+    "if args.build_type == 'official':",
+    "if args.build_type == 'please_no':",
+  )
+
+  with open("build/compute_build_timestamp.py", "w") as timestamp_file:
+    timestamp_file.write(timestamp_file_contents)
 
   return 0
 

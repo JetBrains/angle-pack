@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-import common, os, shutil, subprocess, sys
+import common, os, subprocess, sys
 
 def main():
   os.chdir(os.path.join(os.path.dirname(__file__), os.pardir, 'angle'))
@@ -8,15 +8,16 @@ def main():
   build_type = common.build_type()
   machine = common.machine()
   host = common.host()
-  host_machine = common.host_machine()
   target = common.target()
-  ndk = common.ndk()
 
   if build_type == 'Debug':
     args = ['is_debug=true']
   else:
-    args = ['is_debug=false']
-    # args = ['is_official_build=true']
+    args = [
+      'is_official_build=true',
+      # the official build enable Chrome PGO, which requires a full Chrome checkout
+      'chrome_pgo_phase=0',
+    ]
 
   args += [
     'target_cpu="' + machine + '"',
