@@ -1,0 +1,33 @@
+From e95c8458b3900d976b14dd73e5b87393d4b16fb8 Mon Sep 17 00:00:00 2001
+From: Alovchin91 <8490695+Alovchin91@users.noreply.github.com>
+Date: Wed, 3 Sep 2025 02:52:47 +0200
+Subject: [PATCH] Don't use DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
+
+A swap chain for Windows.UI.Composition is created with DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT
+flag, but is resized without it. This leads to an error, because according to MSDN, this flag cannot be changed by a call to ResizeBuffers.
+
+In fact, this flag is never used by any code in ANGLE, so we should remove it.
+
+https://issues.angleproject.org/442600654
+---
+ .../renderer/d3d/d3d11/converged/CompositorNativeWindow11.cpp | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/src/libANGLE/renderer/d3d/d3d11/converged/CompositorNativeWindow11.cpp b/src/libANGLE/renderer/d3d/d3d11/converged/CompositorNativeWindow11.cpp
+index 0e64f78d53..df34085649 100644
+--- a/src/libANGLE/renderer/d3d/d3d11/converged/CompositorNativeWindow11.cpp
++++ b/src/libANGLE/renderer/d3d/d3d11/converged/CompositorNativeWindow11.cpp
+@@ -118,9 +118,7 @@ HRESULT CompositorNativeWindow11::createSwapChain(ID3D11Device *device,
+     swapChainDesc.Scaling     = DXGI_SCALING_STRETCH;
+     swapChainDesc.SwapEffect  = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+     swapChainDesc.AlphaMode   = mHasAlpha ? DXGI_ALPHA_MODE_PREMULTIPLIED : DXGI_ALPHA_MODE_IGNORE;
+-#ifndef ANGLE_ENABLE_WINDOWS_UWP
+-    swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG::DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+-#endif
++    swapChainDesc.Flags       = 0;
+     Microsoft::WRL::ComPtr<IDXGISwapChain1> swapChain1;
+     hr = factory2->CreateSwapChainForComposition(device, &swapChainDesc, nullptr, &swapChain1);
+     if (SUCCEEDED(hr))
+-- 
+2.50.1.windows.1
+
